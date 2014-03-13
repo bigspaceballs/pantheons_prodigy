@@ -1,0 +1,10 @@
+local version = os.version()
+print"Installing OS on your computer! Please be paitent, this may take a while."
+print("Version of CraftOS is "...version..."")
+print"Version of Pantheons ProdigyOS is 1.0"
+print"Grabbing NPaintPro..."
+shell.run("pastebin get pzWSRqNF npaint")
+print"Grabbing FileManager..."
+
+
+

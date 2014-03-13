@@ -1,0 +1,28 @@
+--VARIABLES AND FUNCTIONS--
+local ejectAfterBurning = true
+local labelAfterBurning = false
+local driveSide = "right"
+--PROGRAM START--
+term.setTextColor(colors.red)
+print"Disk burning software."
+term.setTextColor(colors.white)
+print" "
+write("What is the path you would like to burn?: ")
+local burnPath = read()
+write("What is the path you would like to burn to?: ")
+local burnToPath = read()
+print"Alright, burning"
+fs.copy(burnPath, burnToPath)
+if ejectAfterBurning == true then
+	disk.eject(driveSide)
+else
+	print"ejectAfterBurning is set to false, continue with program..."
+end
+if labelAfterBurning == true then
+	write"Label please: "
+	local setDiskLabel = read()
+	disk.setLabel(driveSide, setDiskLabel)
+else
+	print"labelAfterBurning is set to false, continue with program..."
+end
+

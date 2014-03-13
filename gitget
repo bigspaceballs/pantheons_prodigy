@@ -1,0 +1,70 @@
+--[[ /gitget
+GitHub downloading utility for CC.
+Developed by apemanzilla.
+
+If you want to use this as an automated installer, please see lines 13 and 23.
+
+This requires ElvishJerricco's JSON parsing API.
+Direct link: http://pastebin.com/raw.php?i=4nRg9CHU
+]]--
+
+local args = {...}
+
+--[[
+--Remove the line above this and change the lines below to use automated mode.
+local automated = true							-- Don't touch!
+local hide_progress = true						-- If true, will not list out files as they are downloaded
+args[1] = "apemanzilla"							-- Github username
+args[2] = "ApeOs"								-- Github repo name
+args[3] = nil									-- Branch - defaults to "master"
+args[4] = nil									-- Path - defaults to root ("/")
+local pre_dl = "print('Starting download...')"	-- Command(s) to run before download starts.
+local post_dl = "print('Download complete!')"	-- Command(s) to run after download completes.
+--Remove the line below this and change the lines below to use automated mode.
+]]--
+
+args[3] = args[3] or "master"
+args[4] = args[4] or ""
+
+if not automated and #args < 2 then
+	print("Usage:\n"..shell.getRunningProgram().." <user> <repo> [branch=master] [path=/]") error()
+end
+
+local function save(data,file)
+	local file = shell.resolve(file)
+	if not (fs.exists(string.sub(file,1,#file - #fs.getName(file))) and fs.isDir(string.sub(file,1,#file - #fs.getName(file)))) then
+		if fs.exists(string.sub(file,1,#file - #fs.getName(file))) then fs.delete(string.sub(file,1,#file - #fs.getName(file))) end
+		fs.makeDir(string.sub(file,1,#file - #fs.getName(file)))
+	end
+	local f = fs.open(file,"w")
+	f.write(data)
+	f.close()
+end
+
+local function download(url, file)
+	save(http.get(url).readAll(),file)
+end
+
+local function pullDir(tbl)
+	for k,v in pairs(tbl) do
+		if v.type == "dir" then
+			if not hide_progress then print(""..v.path.."/") end
+			pullDir(json.decode(http.get(v._links.self).readAll()))
+		else
+			if v.path ~= "readme.md" then
+				if not hide_progress then print(""..v.path) end
+				download("https://raw.github.com/"..args[1].."/"..args[2].."/"..args[3].."/"..v.path,fs.combine(args[4],v.path))
+			end
+		end
+	end
+end
+
+if not json then
+	print("Downloading JSON api...\n(Credits to ElvishJerricco!)")
+	download("http://pastebin.com/raw.php?i=4nRg9CHU","json")
+	os.loadAPI("json")
+end
+
+if pre_dl then loadstring(pre_dl)() else print("Downloading files from github....") end
+pullDir(json.decode(http.get("https://api.github.com/repos/"..args[1].."/"..args[2].."/contents/?ref="..args[3]).readAll()))
+if post_dl then loadstring(post_dl)() end

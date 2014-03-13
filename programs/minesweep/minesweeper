@@ -1,0 +1,153 @@
+--variables
+local maxW, maxH = term.getSize()
+local off = 2
+maxW = maxW - 2*off
+maxH = maxH - 2*off
+local w, h
+w = 10
+h = 10
+local num = 10
+local grid = {}
+for j = 1, maxH do
+  grid[j] =  {}
+  for i = 1, maxW do
+    grid[j][i] = " "
+  end
+end
+
+
+
+local function init()
+  for j = 1, h do
+    for i = 1, w do
+      grid[j][i] = " "
+    end
+  end
+  for i = 1, num do
+    local x, y
+    repeat
+      x = math.random(1, w)
+      y = math.random(1, h)
+    until grid[y][x] == " "
+    grid[y][x] = "u"
+  end
+end
+
+local function display()
+  for j = 1, h do
+    term.setCursorPos(off+1, off+j)
+    for i = 1, w do
+      if grid[j][i] == " " or grid[j][i] == "u" then
+        term.setBackgroundColor(colors.blue)
+        write(" ")
+      elseif grid[j][i] == "m" then
+        term.setBackgroundColor(colors.red)
+        write("*")
+      else
+        term.setBackgroundColor(colors.lightGray)
+        if grid[j][i] == "0" then
+          write(" ")
+        else
+          write(grid[j][i])
+        end
+      end
+    end
+  end
+end
+
+local function update(e, a1, a2, a3)
+  if e == "mouse_click" and a1 == 1 then
+    local x, y
+    x = a2-off
+    y = a3-off
+    if grid[y][x] == "u" then
+      return true
+    elseif grid[y][x] == " " then
+      local count = 0
+      for j=-1,1 do
+        for i = -1, 1 do
+          if i~=0 or j~=0 then
+            if x+i>0 and x+i<w+1 and y+j>0 and y+j<h+1 then
+              if grid[y+j][x+i] == "u" then
+                count = count + 1
+              end
+            end
+          end
+        end
+      end
+      grid[y][x] = tostring(count)
+      if count == 0 then
+        if x>1 then update(e, a1, a2-1, a3) end
+        if x<w then update(e, a1, a2+1, a3) end
+        if y>1 then update(e, a1, a2, a3-1) end
+        if y<h then update(e, a1, a2, a3+1) end
+      end
+    end
+  end
+end
+
+local function checkEnd()
+  local count = 0
+  for j = 1, h do
+    for i = 1, w do
+      if grid[j][i] == " " then
+        count = count+1
+      end
+    end
+  end
+  if count == 0 then
+    return true
+  else
+    return false
+  end
+end
+
+local function endGame()
+  for j = 1, h do
+    for i = 1, w do
+      if grid[j][i] == "u" then
+        grid[j][i] = "m"
+      end
+    end
+  end
+end
+
+
+local contGame = true
+while contGame do
+  term.setBackgroundColor(colors.black)
+  term.clear()
+  init()
+  local cont = true
+  while cont do
+    display()
+    local e, a1, a2, a3 = os.pullEvent()
+    if update(e, a1, a2, a3) or checkEnd() then
+      cont = false
+    end
+  end
+  endGame()
+  display()
+  term.setBackgroundColor(colors.black)
+  term.setCursorPos(1, 1)
+  if checkEnd() then
+    print("You won!")
+  else
+    print("You lost!")
+  end
+  sleep(2)
+  local choice
+  repeat
+    term.clear()
+    term.setCursorPos(1, 1)
+    print("What now?")
+    print("  1 - play again")
+    print("  2 - quit")
+    choice = read()
+  until choice == "1" or choice == "2"
+  if choice == "2" then
+    contGame = false
+    term.clear()
+    term.setCursorPos(1, 1)
+  end
+end
